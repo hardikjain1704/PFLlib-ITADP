@@ -34,7 +34,7 @@ from datasets.pneumonia_mnist_loader import load_pneumonia_shard
 
 def fetch_global_model(server_url: str) -> dict:
     """Download the current global model weights from the server."""
-    resp = requests.get(f"{server_url}/global-model", timeout=30)
+    resp = requests.get(f"{server_url}/global-model", timeout=60)
     resp.raise_for_status()
     buf = io.BytesIO(resp.content)
     state_dict = torch.load(buf, map_location="cpu", weights_only=False)
@@ -43,7 +43,7 @@ def fetch_global_model(server_url: str) -> dict:
 
 def fetch_round_config(server_url: str) -> dict:
     """Get current round configuration from the server."""
-    resp = requests.get(f"{server_url}/round-config", timeout=10)
+    resp = requests.get(f"{server_url}/round-config", timeout=30)
     resp.raise_for_status()
     return resp.json()
 
@@ -154,7 +154,7 @@ def upload_weights(
             "local_accuracy": local_accuracy,
         },
         files={"weights_file": ("weights.pt", buf, "application/octet-stream")},
-        timeout=60,
+        timeout=120,
     )
     resp.raise_for_status()
     return resp.json()

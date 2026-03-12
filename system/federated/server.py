@@ -311,26 +311,27 @@ def start_round(
 
 @app.get("/global-model")
 def get_global_model():
-    with _lock:
-        if _state["global_model"] is None:
-            raise HTTPException(404, "No global model available yet.")
-        buf = io.BytesIO()
-        torch.save(_state["global_model"], buf)
-        buf.seek(0)
+    model_state = _state["global_model"]
+    if model_state is None:
+        raise HTTPException(404, "No global model available yet.")
+    # Serialize outside the lock to keep the server responsive
+    buf = io.BytesIO()
+    torch.save(model_state, buf)
+    buf.seek(0)
     return StreamingResponse(buf, media_type="application/octet-stream")
 
 
 @app.get("/round-config")
 def get_round_config():
-    with _lock:
-        return {
-            "current_round": _state["current_round"],
-            "total_rounds": _state["total_rounds"],
-            "local_epochs": _state["local_epochs"],
-            "batch_size": _state["batch_size"],
-            "learning_rate": _state["learning_rate"],
-            "status": _state["status"],
-        }
+    # No lock — read-only snapshot, keeps endpoint responsive during aggregation
+    return {
+        "current_round": _state["current_round"],
+        "total_rounds": _state["total_rounds"],
+        "local_epochs": _state["local_epochs"],
+        "batch_size": _state["batch_size"],
+        "learning_rate": _state["learning_rate"],
+        "status": _state["status"],
+    }
 
 
 @app.post("/upload-weights")
@@ -401,7 +402,9 @@ async def upload_weights(
         expected = _state["expected_clients"]
 
     if received >= expected:
-        _do_aggregation()
+        # Run aggregation in a background thread so this response returns
+        # immediately and the server stays responsive to other requests.
+        threading.Thread(target=_do_aggregation, daemon=True).start()
 
     return {"status": "accepted", "client_id": client_id, "round": current_round}
 
@@ -508,11 +511,11 @@ def _do_aggregation():
 
 @app.get("/status")
 def get_status():
-    with _lock:
-        return {
-            "status": _state["status"],
-            "current_round": _state["current_round"],
-            "total_rounds": _state["total_rounds"],
+    # No lock — read-only snapshot, keeps endpoint responsive
+    return {
+        "status": _state["status"],
+        "current_round": _state["current_round"],
+        "total_rounds": _state["total_rounds"],
             "expected_clients": _state["expected_clients"],
             "clients_received": len(_state["client_weights"]),
             "round_history": _state["round_history"],
@@ -582,12 +585,12 @@ def get_user_info(user_id: int):
 
 @app.get("/training-status")
 def get_training_status():
-    with _lock:
-        return {
-            "job_id": f"federated_{_state['started_at']}" if _state["started_at"] else None,
-            "status": _state["status"],
-            "running": _state["status"] in ("waiting", "aggregating"),
-            "started_at": _state["started_at"],
+    # No lock — read-only snapshot
+    return {
+        "job_id": f"federated_{_state['started_at']}" if _state["started_at"] else None,
+        "status": _state["status"],
+        "running": _state["status"] in ("waiting", "aggregating"),
+        "started_at": _state["started_at"],
             "finished_at": _state["finished_at"],
             "exit_code": 0 if _state["status"] == "completed" else None,
             "config": {
