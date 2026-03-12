@@ -274,7 +274,7 @@ def main():
     parser = argparse.ArgumentParser(description="PFLlib Federated Client")
     parser.add_argument("--client-id", type=int, required=True,
                         help="Client ID (0 for Laptop A, 1 for Laptop B)")
-    parser.add_argument("--server-url", type=str, default="http://127.0.0.1:9000",
+    parser.add_argument("--server-url", type=str, default="http://127.0.0.1:9001",
                         help="URL of the aggregation server")
     parser.add_argument("--device", type=str, default="cpu",
                         help="Torch device (cpu or cuda)")

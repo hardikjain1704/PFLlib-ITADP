@@ -38,7 +38,7 @@ app.add_middleware(
 )
 
 # ── Aggregation server URL ────────────────────────────────────
-AGG_SERVER = os.environ.get("AGG_SERVER_URL", "http://127.0.0.1:9000")
+AGG_SERVER = os.environ.get("AGG_SERVER_URL", "http://127.0.0.1:9001")
 
 
 def _agg_get(path: str):
