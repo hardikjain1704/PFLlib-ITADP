@@ -1,5 +1,7 @@
 /results
-/system/models
+/system/models/*.pt
+/system/models/*.pth
+/system/models/*.bin
 *__pycache__*
 node_modules/
 .DS_Store
