@@ -23,6 +23,7 @@ Endpoints:
     GET  /health            — health check
 """
 
+import asyncio
 import copy
 import io
 import json
@@ -30,6 +31,7 @@ import os
 import sys
 import threading
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
@@ -39,6 +41,9 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+# Thread pool for CPU-heavy work (torch.load / torch.save / aggregation)
+_executor = ThreadPoolExecutor(max_workers=4)
 
 # ── Resolve project paths ─────────────────────────────────────
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -310,14 +315,18 @@ def start_round(
 
 
 @app.get("/global-model")
-def get_global_model():
+async def get_global_model():
     model_state = _state["global_model"]
     if model_state is None:
         raise HTTPException(404, "No global model available yet.")
-    # Serialize outside the lock to keep the server responsive
-    buf = io.BytesIO()
-    torch.save(model_state, buf)
-    buf.seek(0)
+    # Offload serialization to thread pool so event loop stays free
+    loop = asyncio.get_event_loop()
+    def _serialize():
+        buf = io.BytesIO()
+        torch.save(model_state, buf)
+        buf.seek(0)
+        return buf
+    buf = await loop.run_in_executor(_executor, _serialize)
     return StreamingResponse(buf, media_type="application/octet-stream")
 
 
@@ -381,10 +390,13 @@ async def upload_weights(
         )
         raise HTTPException(403, f"Client {client_id}: purpose validation failed.")
 
-    # ── Read weights ───────────────────────────────────────────
+    # ── Read weights (offload blocking torch.load to thread pool) ──
     data = await weights_file.read()
-    buf = io.BytesIO(data)
-    local_state_dict = torch.load(buf, map_location="cpu", weights_only=False)
+    loop = asyncio.get_event_loop()
+    local_state_dict = await loop.run_in_executor(
+        _executor,
+        lambda: torch.load(io.BytesIO(data), map_location="cpu", weights_only=False),
+    )
 
     with _lock:
         current_round = _state["current_round"]
