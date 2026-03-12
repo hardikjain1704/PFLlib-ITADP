@@ -86,7 +86,7 @@ def _write_training_log(entries: List[Dict[str, Any]]):
 
 
 # ── Global training state ─────────────────────────────────────
-_lock = threading.Lock()
+_lock = threading.RLock()  # reentrant: _log() can be called while _lock is held
 
 _state: Dict[str, Any] = {
     "global_model": None,
@@ -528,27 +528,27 @@ def get_status():
         "status": _state["status"],
         "current_round": _state["current_round"],
         "total_rounds": _state["total_rounds"],
-            "expected_clients": _state["expected_clients"],
-            "clients_received": len(_state["client_weights"]),
-            "round_history": _state["round_history"],
-            "started_at": _state["started_at"],
-            "finished_at": _state["finished_at"],
-            "running": _state["status"] in ("waiting", "aggregating"),
-            "output_lines": _state["output_lines"][-100:],
-            "total_lines": len(_state["output_lines"]),
-            "config": {
-                "algorithm": "FedAvg",
-                "dataset": "PneumoniaMNIST",
-                "model": "PneumoniaCNN",
-                "global_rounds": _state["total_rounds"],
-                "local_epochs": _state["local_epochs"],
-                "batch_size": _state["batch_size"],
-                "learning_rate": _state["learning_rate"],
-                "num_clients": _state["expected_clients"],
-                "training_purpose": "image_classification",
-                "dataset_features": ["image", "label"],
-            },
-        }
+        "expected_clients": _state["expected_clients"],
+        "clients_received": len(_state["client_weights"]),
+        "round_history": _state["round_history"],
+        "started_at": _state["started_at"],
+        "finished_at": _state["finished_at"],
+        "running": _state["status"] in ("waiting", "aggregating"),
+        "output_lines": _state["output_lines"][-100:],
+        "total_lines": len(_state["output_lines"]),
+        "config": {
+            "algorithm": "FedAvg",
+            "dataset": "PneumoniaMNIST",
+            "model": "PneumoniaCNN",
+            "global_rounds": _state["total_rounds"],
+            "local_epochs": _state["local_epochs"],
+            "batch_size": _state["batch_size"],
+            "learning_rate": _state["learning_rate"],
+            "num_clients": _state["expected_clients"],
+            "training_purpose": "image_classification",
+            "dataset_features": ["image", "label"],
+        },
+    }
 
 
 @app.get("/training-log")
@@ -603,24 +603,24 @@ def get_training_status():
         "status": _state["status"],
         "running": _state["status"] in ("waiting", "aggregating"),
         "started_at": _state["started_at"],
-            "finished_at": _state["finished_at"],
-            "exit_code": 0 if _state["status"] == "completed" else None,
-            "config": {
-                "algorithm": "FedAvg",
-                "dataset": "PneumoniaMNIST",
-                "model": "PneumoniaCNN",
-                "global_rounds": _state["total_rounds"],
-                "local_epochs": _state["local_epochs"],
-                "batch_size": _state["batch_size"],
-                "learning_rate": _state["learning_rate"],
-                "num_clients": _state["expected_clients"],
-                "training_purpose": "image_classification",
-                "dataset_features": ["image", "label"],
-            },
-            "output_lines": _state["output_lines"][-100:],
-            "total_lines": len(_state["output_lines"]),
-            "round_history": _state["round_history"],
-        }
+        "finished_at": _state["finished_at"],
+        "exit_code": 0 if _state["status"] == "completed" else None,
+        "config": {
+            "algorithm": "FedAvg",
+            "dataset": "PneumoniaMNIST",
+            "model": "PneumoniaCNN",
+            "global_rounds": _state["total_rounds"],
+            "local_epochs": _state["local_epochs"],
+            "batch_size": _state["batch_size"],
+            "learning_rate": _state["learning_rate"],
+            "num_clients": _state["expected_clients"],
+            "training_purpose": "image_classification",
+            "dataset_features": ["image", "label"],
+        },
+        "output_lines": _state["output_lines"][-100:],
+        "total_lines": len(_state["output_lines"]),
+        "round_history": _state["round_history"],
+    }
 
 
 @app.post("/start-training")

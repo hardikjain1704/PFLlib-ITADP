@@ -1,1 +1,88 @@
-[]
+[
+  {
+    "event": "participation",
+    "client_id": 0,
+    "round_number": 1,
+    "purpose": "image_classification",
+    "features": [
+      "image",
+      "label"
+    ],
+    "contribution_weight": 0.5,
+    "dataset": "PneumoniaMNIST",
+    "algorithm": "FedAvg",
+    "timestamp": "2026-03-12T16:36:35.453041+00:00"
+  },
+  {
+    "event": "participation",
+    "client_id": 1,
+    "round_number": 1,
+    "purpose": "image_classification",
+    "features": [
+      "image",
+      "label"
+    ],
+    "contribution_weight": 0.5,
+    "dataset": "PneumoniaMNIST",
+    "algorithm": "FedAvg",
+    "timestamp": "2026-03-12T16:36:35.453678+00:00"
+  },
+  {
+    "event": "round_summary",
+    "round_number": 1,
+    "participating_clients": [
+      0,
+      1
+    ],
+    "excluded_clients": [],
+    "num_participating": 2,
+    "num_excluded": 0,
+    "purpose": "image_classification",
+    "dataset": "PneumoniaMNIST",
+    "algorithm": "FedAvg",
+    "timestamp": "2026-03-12T16:36:35.456494+00:00"
+  },
+  {
+    "event": "participation",
+    "client_id": 1,
+    "round_number": 2,
+    "purpose": "image_classification",
+    "features": [
+      "image",
+      "label"
+    ],
+    "contribution_weight": 0.5,
+    "dataset": "PneumoniaMNIST",
+    "algorithm": "FedAvg",
+    "timestamp": "2026-03-12T16:36:38.209157+00:00"
+  },
+  {
+    "event": "participation",
+    "client_id": 0,
+    "round_number": 2,
+    "purpose": "image_classification",
+    "features": [
+      "image",
+      "label"
+    ],
+    "contribution_weight": 0.5,
+    "dataset": "PneumoniaMNIST",
+    "algorithm": "FedAvg",
+    "timestamp": "2026-03-12T16:36:38.209880+00:00"
+  },
+  {
+    "event": "round_summary",
+    "round_number": 2,
+    "participating_clients": [
+      1,
+      0
+    ],
+    "excluded_clients": [],
+    "num_participating": 2,
+    "num_excluded": 0,
+    "purpose": "image_classification",
+    "dataset": "PneumoniaMNIST",
+    "algorithm": "FedAvg",
+    "timestamp": "2026-03-12T16:36:38.211290+00:00"
+  }
+]

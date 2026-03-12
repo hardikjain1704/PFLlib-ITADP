@@ -1,1 +1,40 @@
-[]
+[
+  {
+    "round_number": 1,
+    "participating_clients": [
+      0,
+      1
+    ],
+    "excluded_clients": [],
+    "local_loss": {
+      "0": 0.4584,
+      "1": 0.4603
+    },
+    "avg_loss": 0.4593,
+    "avg_accuracy": 0.7857,
+    "contribution_weights": {
+      "0": 0.5,
+      "1": 0.5
+    },
+    "timestamp": "2026-03-12T16:36:35.456710+00:00"
+  },
+  {
+    "round_number": 2,
+    "participating_clients": [
+      1,
+      0
+    ],
+    "excluded_clients": [],
+    "local_loss": {
+      "1": 0.2129,
+      "0": 0.2283
+    },
+    "avg_loss": 0.2206,
+    "avg_accuracy": 0.9144,
+    "contribution_weights": {
+      "1": 0.5,
+      "0": 0.5
+    },
+    "timestamp": "2026-03-12T16:36:38.211577+00:00"
+  }
+]
