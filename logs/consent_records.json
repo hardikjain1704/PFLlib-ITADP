@@ -1,0 +1,111 @@
+{
+  "0": {
+    "client_id": 0,
+    "consent": true,
+    "timestamp": "2026-03-12T10:10:43.782971+00:00",
+    "purpose": "image_classification",
+    "purpose_valid": true
+  },
+  "1": {
+    "client_id": 1,
+    "consent": true,
+    "timestamp": "2026-03-12T10:10:51.344185+00:00",
+    "purpose": "text_classification",
+    "purpose_valid": false
+  },
+  "2": {
+    "client_id": 2,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.464672+00:00"
+  },
+  "3": {
+    "client_id": 3,
+    "consent": false,
+    "timestamp": "2026-03-11T21:06:29.473001+00:00"
+  },
+  "4": {
+    "client_id": 4,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.480934+00:00"
+  },
+  "5": {
+    "client_id": 5,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.489415+00:00"
+  },
+  "6": {
+    "client_id": 6,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.497644+00:00"
+  },
+  "7": {
+    "client_id": 7,
+    "consent": false,
+    "timestamp": "2026-03-11T21:06:29.505783+00:00"
+  },
+  "8": {
+    "client_id": 8,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.513197+00:00"
+  },
+  "9": {
+    "client_id": 9,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.520232+00:00"
+  },
+  "10": {
+    "client_id": 10,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.527723+00:00"
+  },
+  "11": {
+    "client_id": 11,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.535769+00:00"
+  },
+  "12": {
+    "client_id": 12,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.543964+00:00"
+  },
+  "13": {
+    "client_id": 13,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.557727+00:00"
+  },
+  "14": {
+    "client_id": 14,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.586080+00:00"
+  },
+  "15": {
+    "client_id": 15,
+    "consent": false,
+    "timestamp": "2026-03-11T21:06:29.597935+00:00"
+  },
+  "16": {
+    "client_id": 16,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.606775+00:00"
+  },
+  "17": {
+    "client_id": 17,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.614845+00:00"
+  },
+  "18": {
+    "client_id": 18,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.622453+00:00"
+  },
+  "19": {
+    "client_id": 19,
+    "consent": true,
+    "timestamp": "2026-03-11T21:06:29.629938+00:00"
+  },
+  "20": {
+    "client_id": 20,
+    "consent": true,
+    "timestamp": "2026-03-11T20:25:43.131828+00:00"
+  }
+}

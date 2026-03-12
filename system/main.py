@@ -498,6 +498,11 @@ if __name__ == "__main__":
     parser.add_argument('-ca', "--fedcross_alpha", type=float, default=0.99)
     parser.add_argument('-cmss', "--collaberative_model_select_strategy", type=int, default=1)
 
+    # ── Privacy compliance ─────────────────────────────────────
+    parser.add_argument('--training_purpose', type=str, default='image_classification',
+                        help="Declared training purpose for purpose-limitation validation")
+    parser.add_argument('--dataset_features', nargs='+', type=str, default=['image', 'label'],
+                        help="Dataset feature names for purpose validation")
 
     args = parser.parse_args()
 

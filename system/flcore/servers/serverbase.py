@@ -1,5 +1,6 @@
 import torch
 import os
+import sys
 import numpy as np
 import h5py
 import copy
@@ -7,6 +8,16 @@ import time
 import random
 from utils.data_utils import read_client_data
 from utils.dlg import DLG
+
+# ── Privacy compliance modules ─────────────────────────────────
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from privacy import ConsentManager, PurposeValidator, TransparencyLogger
+
+# Shared singletons – paths resolve relative to project root
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+_CONSENT_MGR = ConsentManager(os.path.join(_PROJECT_ROOT, 'logs', 'consent_records.json'))
+_PURPOSE_VAL = PurposeValidator(log_path=os.path.join(_PROJECT_ROOT, 'logs', 'purpose_violations.json'))
+_TRANSPARENCY = TransparencyLogger(os.path.join(_PROJECT_ROOT, 'logs', 'transparency_log.json'))
 
 
 class Server(object):
@@ -63,7 +74,32 @@ class Server(object):
         self.eval_new_clients = False
         self.fine_tuning_epoch_new = args.fine_tuning_epoch_new
 
+        # ── Privacy compliance ──────────────────────────────────
+        self.consent_manager = _CONSENT_MGR
+        self.purpose_validator = _PURPOSE_VAL
+        self.transparency_logger = _TRANSPARENCY
+
+        # Training purpose and dataset features (configurable via args)
+        self.training_purpose = getattr(args, 'training_purpose', 'image_classification')
+        self.dataset_features = getattr(args, 'dataset_features', ['image', 'label'])
+
+        # Track the current round for logging
+        self._current_round = 0
+
     def set_clients(self, clientObj):
+        # ── Purpose validation before loading data ──────────────
+        result = self.purpose_validator.validate(
+            purpose=self.training_purpose,
+            dataset_features=self.dataset_features,
+            dataset_name=self.dataset,
+        )
+        if not result["valid"]:
+            raise ValueError(
+                f"[PurposeValidator] Training BLOCKED: {result['message']}\n"
+                f"  Allowed features for '{self.training_purpose}': {result['allowed_features']}\n"
+                f"  Invalid features found: {result['invalid_features']}"
+            )
+
         for i, train_slow, send_slow in zip(range(self.num_clients), self.train_slow_clients, self.send_slow_clients):
             train_data = read_client_data(self.dataset, i, is_train=True, few_shot=self.few_shot)
             test_data = read_client_data(self.dataset, i, is_train=False, few_shot=self.few_shot)
@@ -91,14 +127,33 @@ class Server(object):
         self.send_slow_clients = self.select_slow_clients(
             self.send_slow_rate)
 
-    def select_clients(self):
+    def select_clients(self, round_number=None):
+        if round_number is not None:
+            self._current_round = round_number
+        else:
+            self._current_round += 1
         if self.random_join_ratio:
             self.current_num_join_clients = np.random.choice(range(self.num_join_clients, self.num_clients+1), 1, replace=False)[0]
         else:
             self.current_num_join_clients = self.num_join_clients
         selected_clients = list(np.random.choice(self.clients, self.current_num_join_clients, replace=False))
 
-        return selected_clients
+        # ── Privacy compliance: consent enforcement ─────────────
+        allowed, excluded_ids = self.consent_manager.filter_consented_clients(selected_clients)
+
+        # Log exclusions to transparency logger
+        for eid in excluded_ids:
+            self.transparency_logger.log_exclusion(
+                client_id=eid,
+                round_number=self._current_round,
+                reason="consent_not_granted",
+            )
+
+        if excluded_ids:
+            print(f"[Privacy] Round {self._current_round}: {len(excluded_ids)} client(s) excluded (no consent): {excluded_ids}")
+            print(f"[Privacy] Round {self._current_round}: {len(allowed)} client(s) participating")
+
+        return allowed
 
     def send_models(self):
         assert (len(self.clients) > 0)
@@ -114,8 +169,11 @@ class Server(object):
     def receive_models(self):
         assert (len(self.selected_clients) > 0)
 
-        active_clients = random.sample(
-            self.selected_clients, int((1-self.client_drop_rate) * self.current_num_join_clients))
+        # Use actual selected count (may be smaller than current_num_join_clients
+        # due to consent filtering)
+        actual_count = len(self.selected_clients)
+        active_count = max(1, int((1-self.client_drop_rate) * actual_count))
+        active_clients = random.sample(self.selected_clients, active_count)
 
         self.uploaded_ids = []
         self.uploaded_weights = []
@@ -134,6 +192,31 @@ class Server(object):
                 self.uploaded_models.append(client.model)
         for i, w in enumerate(self.uploaded_weights):
             self.uploaded_weights[i] = w / tot_samples
+
+        # ── Privacy compliance: log each client's contribution ──
+        participating_ids = []
+        for cid, w in zip(self.uploaded_ids, self.uploaded_weights):
+            self.transparency_logger.log_participation(
+                client_id=cid,
+                round_number=self._current_round,
+                purpose=self.training_purpose,
+                features=self.dataset_features,
+                contribution_weight=w,
+                dataset=self.dataset,
+                algorithm=self.algorithm,
+            )
+            participating_ids.append(cid)
+
+        # Log round summary
+        excluded_in_round = [c.id for c in self.selected_clients if c.id not in self.uploaded_ids]
+        self.transparency_logger.log_round_summary(
+            round_number=self._current_round,
+            participating_ids=participating_ids,
+            excluded_ids=excluded_in_round,
+            purpose=self.training_purpose,
+            dataset=self.dataset,
+            algorithm=self.algorithm,
+        )
 
     def aggregate_parameters(self):
         assert (len(self.uploaded_models) > 0)
